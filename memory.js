@@ -1,30 +1,90 @@
 import loki from 'lokijs'
-import LokiFsStructuredAdapter from 'node_modules/lokijs/src/loki-fs-structured-adapter.js'
-import config from './config'
+import LokiFsStructuredAdapter from './node_modules/lokijs/src/loki-fs-structured-adapter.js'
+// import config from './config'
 
-let db
+// SAVE : will save database in 'test.crypted'
+import lokiCryptedFileAdapter from './node_modules/lokijs/src/loki-crypted-file-adapter'
+lokiCryptedFileAdapter.setSecret('mySecret') // you should change 'mySecret' to something supplied by the user
 
-export const remember = async()=> new Promise( (ok,ko)=> {
-
-	if( db ) return ok( db )
-
-	db = new loki( config.db, {
-		autoload: true,
-		autoloadCallback : function databaseInitialize() 
-		{
-			
-			// let messages = db.getCollection("messages") || db.addCollection("messages")
-			ok( db )
-		},
-		autosave: true, 
-		autosaveInterval: 4000
-	})
-
-}) 
+// var db = new loki('test.crypted',{ adapter: lokiCryptedFileAdapter }); //you can use any name, not just '*.crypted'
 
 const DB = Symbol`DB`
 const COLL = Symbol`COLL`
 export { DB as longTerm, COLL as model }
+
+let db
+
+const toSubjects = name=> name.toLowerCase() + 's'
+
+ 
+
+export const remember = async ( subject, ...models )=> new Promise( (ok,ko)=>
+		db = new loki( `${subject}.db`, Object.assign({ 
+				// adapter: new LokiFsStructuredAdapter(),
+				adapter: lokiCryptedFileAdapter,
+				autoload: true,
+				autoloadCallback : ()=> ok( db ),
+				autosave: true, 
+				autosaveInterval: 4000
+			}, models.reduce( (opt,model)=> {
+				opt[toSubjects(model.name)] = { proto: model }
+				return opt
+			},{}) )
+		)
+	)
+	.then( db=> (models.map( model=> {
+		
+		model[COLL] = db.getCollection( toSubjects(model.name) )
+						|| db.addCollection( toSubjects(model.name), {
+							indices: model.indices,
+							unique: model.unique
+						})
+		model[COLL].objType = model
+		model[COLL][DB] = model[DB] = db
+		model[COLL].upsert = upsert
+
+	}), db) )
+
+
+
+function upsert( data )
+{
+	// let obj, toUpdate = collection.findObject( data )
+	const collection = this
+	let obj
+	,	toUpdate = data && this.findObject(
+			Object.keys( this.binaryIndices )
+				.reduce( (ex,key)=> (ex[key]=data[key],ex), {}  )
+		)
+	// if( toUpdate )
+	// {
+	// 	Object.assign( toUpdate, data )
+	// 	// obj.$loki = toUpdate[0].$loki
+	// 	// obj.meta = toUpdate[0].meta
+	// 	// toUpdate._DB = this
+	// 	collection.update( toUpdate )
+	// }
+	// else {
+	// 	// obj = 
+	// 	// obj._DB = this
+	// 	collection.insert( data instanceof this.objType ? data : new this.objType( data ) )
+	// }
+	
+	return toUpdate
+			? this.update( Object.assign(toUpdate, data) )
+			: this.insert( data instanceof this.objType ? data : new this.objType(data) )
+
+	
+	// TODO replace by change API
+	// let type = (obj || toUpdate).constructor.name.toLowerCase()
+	// this.dispatchEvent({
+	// 	type:  type + (toUpdate ? 'Updated' : 'Added')	// peerAdded accountAdded ...
+	// ,	[type]: obj || toUpdate 						// e.peer e.account ....
+	// })
+	
+	return obj || toUpdate
+}
+
 
 export class PersistableDB /*extends THREE.EventDispatcher*/ {
 	constructor( ...models )
@@ -66,7 +126,7 @@ export class PersistableDB /*extends THREE.EventDispatcher*/ {
 				// transactions: { proto: this._transactionClass },
 			)
 		)
-		.then( db=> this._models.map(m=> m._coll=db.getCollection(model.name.toLowerCase()+'s')) )
+		.then( db=> this._models.map(model=> model._coll = db.getCollection(model.name.toLowerCase()+'s')) )
 	}
 	
 	onMindOpen()
@@ -136,10 +196,10 @@ class Blockchain extends PersistableDB {
  * Persistable class
  */
 
-export class Persistable extends THREE.EventDispatcher {
+export class Persistable {
 	constructor( data = {} )
 	{
-		super()
+		// super()
 		Object.assign( this, data )
 	}
 	get _DB(){ return this.constructor.DB }
@@ -155,6 +215,11 @@ export class Persistable extends THREE.EventDispatcher {
 								.filter( key=> key[0] != '_' )
 					)
 					.reduce( (res,key)=> (res[key] = this[key], res), {} )
+	}
+
+	update()
+	{
+		this[COLL].update( this )
 	}
 }
 
