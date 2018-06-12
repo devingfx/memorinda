@@ -1,0 +1,32 @@
+{
+  "name": "hipermemoro",
+  "version": "0.1.0",
+  "description": "Hipermemoro is a noSQL database use schemas",
+  "main": "index.js",
+  "module": "cli",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "esperanto",
+    "hypermnesic",
+    "hypermnemonic",
+    "memory",
+    "mnemonic",
+    "database",
+    "noSQL",
+    "json",
+    "schema",
+    "brain"
+  ],
+  "author": "Thomas Di Gregorio",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "colors": "^1.2.5",
+    "esm": "^3.0.34",
+    "express": "^4.16.3",
+    "lokijs": "^1.5.4",
+    "minimist": "^1.2.0",
+    "morgan": "^1.9.0"
+  }
+}
