@@ -4,7 +4,7 @@ import readline from 'readline'
 // import config from './config'
 // const { app: { storage } } = config
 
-import { remember, longTerm, model as s, PersistableDB as DB, Persistable } from './memory'
+import { remember, longTerm, model as s, PersistableDB as DB, Persistable } from './memoro'
 let db
 
 

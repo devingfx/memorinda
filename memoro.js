@@ -3,8 +3,8 @@ import LokiFsStructuredAdapter from './node_modules/lokijs/src/loki-fs-structure
 // import config from './config'
 
 // SAVE : will save database in 'test.crypted'
-import lokiCryptedFileAdapter from './node_modules/lokijs/src/loki-crypted-file-adapter'
-lokiCryptedFileAdapter.setSecret('mySecret') // you should change 'mySecret' to something supplied by the user
+import LokiCryptedFileAdapter from './loki-kripta-dosiero-adaptilo'
+// lokiCryptedFileAdapter.setSecret('mySecret') // you should change 'mySecret' to something supplied by the user
 
 // var db = new loki('test.crypted',{ adapter: lokiCryptedFileAdapter }); //you can use any name, not just '*.crypted'
 
@@ -15,24 +15,28 @@ export { DB as longTerm, COLL as model }
 let db
 
 const toSubjects = name=> name.toLowerCase() + 's'
+const isFunc = obj=> typeof obj == 'function'
 
- 
+export default async (...cmd)=> console.log(cmd)
 
-export const remember = async ( subject, ...models )=> new Promise( (ok,ko)=>
+export const remember = async ( subject = 'mem', ...models )=> new Promise( (ok,ko)=>
+		
 		db = new loki( `${subject}.db`, Object.assign({ 
 				// adapter: new LokiFsStructuredAdapter(),
-				adapter: lokiCryptedFileAdapter,
+				adapter: new LokiCryptedFileAdapter('mySecret'),
 				autoload: true,
 				autoloadCallback : ()=> ok( db ),
 				autosave: true, 
 				autosaveInterval: 4000
-			}, models.reduce( (opt,model)=> {
-				opt[toSubjects(model.name)] = { proto: model }
-				return opt
-			},{}) )
-		)
+			},
+			models.filter( isFunc )
+				.reduce( (opt,model)=> {
+					opt[toSubjects(model.name)] = { proto: model }
+					return opt
+				},{}) 
+		))
 	)
-	.then( db=> (models.map( model=> {
+	.then( db=> (models.filter( isFunc ).map( model=> {
 		
 		model[COLL] = db.getCollection( toSubjects(model.name) )
 						|| db.addCollection( toSubjects(model.name), {

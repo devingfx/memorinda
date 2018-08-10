@@ -1,14 +1,17 @@
 {
-  "name": "hipermemoro",
+  "name": "memorinda",
   "version": "0.1.0",
-  "description": "Hipermemoro is a noSQL database use schemas",
-  "main": "index.js",
-  "module": "cli",
+  "description": "Memorinda is a simple noSQL syncable database using schemas",
+  "main": "esm",
+  "module": "kli",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "serve": "esm cli:serve -p5642"
   },
   "keywords": [
     "esperanto",
+    "memorinda",
+    "mémorable",
     "hypermnesic",
     "hypermnemonic",
     "memory",
@@ -22,11 +25,13 @@
   "author": "Thomas Di Gregorio",
   "license": "GPL-3.0",
   "dependencies": {
-    "colors": "^1.2.5",
     "esm": "^3.0.34",
     "express": "^4.16.3",
+    "klitoro": "file:..\\klitoro",
     "lokijs": "^1.5.4",
     "minimist": "^1.2.0",
-    "morgan": "^1.9.0"
-  }
+    "morgan": "^1.9.0",
+    "node-fetch": "^2.1.2"
+  },
+  "bin" : "./esm.js"
 }

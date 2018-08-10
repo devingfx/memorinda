@@ -1,4 +1,4 @@
-import { Persistable, model as s } from '../memory'
+import { Persistable, model as s } from '../memoro'
 import Category from './Category'
 
 export default class User extends Persistable {
